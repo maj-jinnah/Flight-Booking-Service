@@ -1,12 +1,15 @@
 const { Booking } = require('../models');
 const CrudRepository = require('./crud-repository');
+const { StatusCodes } = require('http-status-codes');
+const AppError = require('../utils/errors/app-error');
+const { Op } = require('sequelize');
 
 class BookingRepository extends CrudRepository {
     constructor() {
         super(Booking)
     }
 
-    async createBooking (data, transaction){
+    async createBooking(data, transaction) {
         return await Booking.create(data, { transaction: transaction });
     }
 
@@ -25,10 +28,37 @@ class BookingRepository extends CrudRepository {
             },
             transaction: transaction
         });
-        if(response.length == 0 || response[0] == 0){
+        if (response.length == 0 || response[0] == 0) {
             throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
         }
         return response;
+    }
+
+    async cancelOldBookings(timeDiff) {
+        const response = await Booking.update(
+            { status: 'cancelled' },
+            {
+                where: {
+                    [Op.and]: [
+                        {
+                            createdAt: {
+                                [Op.lt]: timeDiff
+                            }
+                        },
+                        {
+                            status: {
+                                [Op.ne]: 'booked'
+                            }
+                        },
+                        {
+                            status: {
+                                [Op.ne]: 'cancelled'
+                            }
+                        }
+                    ]
+                }
+            }
+        );
     }
 }
 

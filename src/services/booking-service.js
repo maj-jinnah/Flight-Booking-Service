@@ -4,7 +4,7 @@ const { sequelize } = require('../models');
 const { ServerConfig } = require('../config');
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
-const BookingRepository = require('../repositories');
+const { BookingRepository } = require('../repositories');
 
 const bookingRepository = new BookingRepository();
 
@@ -57,7 +57,7 @@ const makePayment = async ({ bookingId, totalCost, transaction }) => {
         const bookingTime = new Date(bookingDetails.createdAt);
         const currentTime = new Date();
         const timeDiff = (currentTime - bookingTime) / (1000 * 60); // difference in minutes
-        if (timeDiff > 20) {
+        if (timeDiff > 30) {
             await cancelBooking(bookingId);
             throw new AppError('The booking has expired', StatusCodes.BAD_REQUEST);
         }
@@ -105,7 +105,21 @@ const cancelBooking = async (bookingId) => {
     }
 }
 
+async function cancelOldBookings() {
+    try {
+        const time = new Date(Date.now() - 1000 * 1800); // time 30 mins ago
+        const response = await bookingRepository.cancelOldBookings(time);
+
+        return response;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 module.exports = {
     createBooking,
     makePayment,
+    cancelBooking,
+    cancelOldBookings
+
 }
