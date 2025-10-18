@@ -2,7 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const apiRoutes = require("./routes");
 
-const { ServerConfig, Logger } = require("./config");
+const { ServerConfig, Logger, QueueConfig } = require("./config");
 const CRONS = require("./utils/common/cron-job");
 
 const app = express();
@@ -18,6 +18,8 @@ app.use("/api", apiRoutes);
 app.listen(ServerConfig.PORT, () => {
     console.log(`server is running on ${ServerConfig.PORT}`);
     CRONS();
+
+    await QueueConfig.connect();
 
     // Logger.log({
     //     label: 'root-file: index.js',

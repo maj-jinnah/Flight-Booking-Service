@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { Booking } = require('../models');
 const { sequelize } = require('../models');
-const { ServerConfig } = require('../config');
+const { ServerConfig, QueueConfig } = require('../config');
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { BookingRepository } = require('../repositories');
@@ -73,6 +73,14 @@ const makePayment = async ({ bookingId, totalCost, transaction }) => {
         await bookingRepository.update(bookingId, { status: 'booked' }, t);
 
         await t.commit();
+
+        await QueueConfig.sendMessage({
+            // need to fetch user email from user service using user id
+            to: "maj.jinnah2006@gmail",
+            
+            subject: 'Flight Booking',
+            text: `You have successfully booked a flight`,
+        });
     } catch (error) {
         await t.rollback();
         throw error;

@@ -2,4 +2,3 @@ node_modules
 .env
 Loggers
 src/config/config.json
-README.md
